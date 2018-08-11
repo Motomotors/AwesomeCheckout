@@ -1,10 +1,4 @@
 {
     "name": "anattadesign/awesome-checkout",
     "type": "magento-module",
-    "authors":[
-        {
-            "name":"Anatta Design",
-            "email":"info@example.com"
-        }
-    ]
 }
