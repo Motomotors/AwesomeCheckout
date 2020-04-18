@@ -18,11 +18,6 @@
 
 class AnattaDesign_AwesomeCheckout_Model_Observer {
 
-	public function uponAdminLogin() {
-		$this->ping();
-		$this->checkAwesomeCheckoutVersion();
-	}
-
 	/**
 	 * If the order was placed via guest checkout, here we are still linking the order to the correct customer id based on the email
 	 *
@@ -109,57 +104,6 @@ class AnattaDesign_AwesomeCheckout_Model_Observer {
 		if ( Mage::helper( 'anattadesign_awesomecheckout/edition' )->isMageEnterprise() ) {
 			$updates = $observer->getEvent()->getUpdates();
 			$updates->addChild( 'anattadesign_awesomecheckout_enterprise' )->file = 'anattadesign_awesomecheckout/enterprise.xml';
-		}
-	}
-
-	public function ping() {
-
-		// Instead of using getStoreConfig make a direct sql query to bypass magento cache
-		// $is_ping_rescheduled = Mage::getStoreConfig( 'anattadesign_awesomecheckout_ping_rescheduled' );
-		$connection = Mage::getSingleton( 'core/resource' )->getConnection( 'core_read' );
-		$table = Mage::getSingleton('core/resource')->getTableName( 'core_config_data' );
-		$stmt = $connection->query( "SELECT value FROM $table WHERE path='anattadesign_awesomecheckout_ping_rescheduled' AND scope = 'default' AND scope_id = 0 LIMIT 1;" );
-		$data = $stmt->fetch();
-		// If $data is false, then that means there is no row in the table, and no ping has been rescheduled
-		if ( $data !== false )
-			Mage::helper( 'anattadesign_awesomecheckout' )->ping();
-	}
-
-	public function checkAwesomeCheckoutVersion() {
-		$request_url = 'http://api.anattadesign.com/awesomecheckout/1alpha/status/latestVersion';
-		// make call
-		$client = new Varien_Http_Client($request_url);
-		$client->setMethod(Varien_Http_Client::GET);
-		try {
-			$response = $client->request();
-			if ($response->isSuccessful()) {
-				$json_response = json_decode($response->getBody());
-				$json_success = $json_response->status === 'success' ? true : false;
-			}
-		} catch (Exception $e) {
-			$json_success = false;
-		}
-		if ($json_success) {
-			// Don't do anything if we are on latest, this prevents duplicate notifications
-			if ( version_compare( $json_response->latestVersion, Mage::getStoreConfig( 'anattadesign_awesomecheckout_latest_checked_version' ), 'eq' ) )
-				return;
-
-			$connection = Mage::getSingleton( 'core/resource' )->getConnection( 'core_read' );
-			$table = Mage::getSingleton('core/resource')->getTableName( 'core_resource' );
-			$stmt = $connection->query( "SELECT version FROM $table WHERE code='anattadesign_awesomecheckout_setup'" );
-			$data = $stmt->fetch();
-			$version = $data['version'];
-
-			if ( version_compare( $json_response->latestVersion, $version, '>' ) ) {
-				Mage::getModel( 'adminnotification/inbox' )
-						->setSeverity( Mage_AdminNotification_Model_Inbox::SEVERITY_NOTICE )
-						->setTitle(Mage::helper('anattadesign_awesomecheckout')->__("Awesome Checkout %s is now available", $json_response->latestVersion))
-						->setDateAdded( gmdate( 'Y-m-d H:i:s' ) )
-						->setUrl( 'http://www.awesomecheckout.com/update' )
-						->setDescription(Mage::helper('anattadesign_awesomecheckout')->__('Your version of Awesome Checkout is currently not up-to-date. Please <a href="http://www.awesomecheckout.com/update">click here</a> to get the latest version.'))
-						->save();
-				Mage::getModel( 'core/config' )->saveConfig( 'anattadesign_awesomecheckout_latest_checked_version', $json_response->latestVersion );
-			}
 		}
 	}
 

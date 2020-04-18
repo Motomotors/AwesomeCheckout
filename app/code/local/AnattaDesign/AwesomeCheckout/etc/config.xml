@@ -102,16 +102,6 @@ along with AwesomeCheckout.  If not, see <http://www.gnu.org/licenses/>.
 				<to>/anattadesign_awesomecheckout/onepage$1</to>
 			</anattadesign_awesomecheckout_onepage_index>
 		</rewrite>
-		<events>
-			<admin_session_user_login_success>
-				<observers>
-					<anattadesign_awesomecheckout_model_observer>
-						<class>AnattaDesign_AwesomeCheckout_Model_Observer</class>
-						<method>uponAdminLogin</method>
-					</anattadesign_awesomecheckout_model_observer>
-				</observers>
-			</admin_session_user_login_success>
-		</events>
 	</global>
 	<frontend>
 		<secure_url>
